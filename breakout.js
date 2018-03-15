@@ -29,8 +29,11 @@ for(c=0; c<brickColumnCount; c++) {
 	}
 }
 
-
-	
+var score = 0;
+var WINNING_SOUND = new Audio("sounds/woohoo.wav");
+var SCORE_SOUND = new Audio("sounds/success.wav");
+var GAMEOVER_SOUND = new Audio("sounds/gameover.wav");
+var lives = 3;
 
 function drawBall() {
 	ctx.beginPath();
@@ -61,11 +64,25 @@ function drawBricks() {
 			ctx.fillStyle = "0095DD";
 			ctx.fill();
 			ctx.closePath();
+			}
 		}
 	}
-	
 }
+
+function drawScore() {
+	ctx.font = "16px Arial";
+	ctx.fillStyle = "#0095DD";
+	ctx.fillText("Score: "+score, 8, 20);
+	document.getElementById("gamescore").innerHTML = "Score: " + score;
 }
+
+function drawLives() {
+	ctx.font = "16px Arial";
+	ctx.fillStyle = "#0095DD"
+	ctx.fillText("Lives: "+lives, canvas.width-65, 20);
+	document.getElementById("gamelives").innerHTML = "Lives: " + lives;
+}
+
 
 
 
@@ -75,6 +92,8 @@ function draw() {
 	drawPaddle();
 	drawBricks();
 	collisionDetection();
+	drawScore();
+	drawLives();
 	
 	x += dx;
 	y += dy;
@@ -90,12 +109,24 @@ function draw() {
 			dy = -dy;
 		}
 		else {
+			lives--;
+			if(!lives) {
+			GAMEOVER_SOUND.play();
 			alert("GAME OVER");
 			x = canvas.width/2;
 			y = canvas.height-30;
 			document.location.reload();
 		}
+		else {
+			x = canvas.width/2;
+			y = canvas.height-30;
+			dx = 2;
+			dy = -2;
+			paddleX = (canvas.width-paddleWidth)/2;
+		}
 	}
+	}
+	
 
 	if(rightPressed && paddleX < canvas.width-paddleWidth){
 		paddleX += 7;
@@ -104,10 +135,11 @@ function draw() {
 		paddleX -= 7;
 	}
 	
-}
+}//end draw()
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
+document.addEventListener("mousemove", mouseMoveHandler, false);
 
 function keyDownHandler(e) {
 	if(e.keyCode == 39) {
@@ -126,6 +158,14 @@ function keyUpHandler(e) {
 		leftPressed = false;
 	}
 }
+
+function mouseMoveHandler(e) {
+	var relativeX = e.clientX - canvas.offsetLeft;
+	if(relativX > 0 && relativeX < canvas.width) {
+		paddleX = relativeX = paddleWidth/2;
+	}
+}
+
 function collisionDetection() {
 	for(c=0; c<brickColumnCount; c++) {
 		for(r=0; r<brickRowCount; r++) {
@@ -134,10 +174,17 @@ function collisionDetection() {
 				if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
 				dy = -dy;
 				b.status = 0;
+				score++;
+				SCORE_SOUND.play();
+				if(score == brickRowCount*brickColumnCount) {
+					WINNING_SOUND.play();
+					alert("YOU WIN, CONGRATULATIONS!");
+					document.location.reload();
 				}
 			}
 		}
 	}
+ }
 }
 	
 setInterval(draw, 10);
